@@ -1,26 +1,26 @@
 personal_log = {}
 
-local modname = minetest.get_current_modname()
-local modpath = minetest.get_modpath(modname)
+local modname = core.get_current_modname()
+local modpath = core.get_modpath(modname)
 
-local ccompass_modpath = minetest.get_modpath("ccompass")
-local compassgps_modpath = minetest.get_modpath("compassgps")
-local default_modpath = minetest.get_modpath("default")
-local unified_inventory_modpath = minetest.get_modpath("unified_inventory")
-local sfinv_buttons_modpath = minetest.get_modpath("sfinv_buttons")
-local sfinv_modpath = minetest.get_modpath("sfinv")
-local mcl_books_modpath = minetest.get_modpath("mcl_books")
-local mcl_formspec_modpath = minetest.get_modpath("mcl_formspec")
+local ccompass_modpath = core.get_modpath("ccompass")
+local compassgps_modpath = core.get_modpath("compassgps")
+local default_modpath = core.get_modpath("default")
+local unified_inventory_modpath = core.get_modpath("unified_inventory")
+local sfinv_buttons_modpath = core.get_modpath("sfinv_buttons")
+local sfinv_modpath = core.get_modpath("sfinv")
+local mcl_books_modpath = core.get_modpath("mcl_books")
+local mcl_formspec_modpath = core.get_modpath("mcl_formspec")
 
-local modstore = minetest.get_mod_storage()
+local modstore = core.get_mod_storage()
 
-local ccompass_recalibration_allowed = minetest.settings:get_bool("ccompass_recalibrate", true)
-local ccompass_restrict_target = minetest.settings:get_bool("ccompass_restrict_target", false)
+local ccompass_recalibration_allowed = core.settings:get_bool("ccompass_recalibrate", true)
+local ccompass_restrict_target = core.settings:get_bool("ccompass_restrict_target", false)
 local ccompass_description_prefix = "^Compass to "
 
-local personal_log_teleport_privilege = minetest.settings:get_bool("personal_log_teleport_privilege", false)
+local personal_log_teleport_privilege = core.settings:get_bool("personal_log_teleport_privilege", false)
 
-local S = minetest.get_translator(modname)
+local S = core.get_translator(modname)
 
 local categories = {
 	S("Location"),
@@ -55,7 +55,7 @@ if mcl_formspec_modpath then
 end
 
 if personal_log_teleport_privilege then
-	minetest.register_privilege("personal_log_teleport", {
+	core.register_privilege("personal_log_teleport", {
         description =S("Allows the player to teleport using the personal log"),
         give_to_singleplayer = false,
         give_to_admin = true,
@@ -65,9 +65,9 @@ end
 
 local function can_teleport(player)
 	local player_name = player:get_player_name()
-	if minetest.check_player_privs(player_name, "teleport") then
+	if core.check_player_privs(player_name, "teleport") then
 		return true
-	elseif personal_log_teleport_privilege and minetest.check_player_privs(player_name, "personal_log_teleport") then
+	elseif personal_log_teleport_privilege and core.check_player_privs(player_name, "personal_log_teleport") then
 		return true
 	else
 		return false
@@ -80,7 +80,7 @@ end
 local function get_state(player_name)
 	local state = modstore:get(player_name .. "_state")
 	if state then
-		state = minetest.deserialize(state)
+		state = core.deserialize(state)
 	end
 	if not state then
 		state = {category=LOCATION_CATEGORY, entry_selected={0,0,0}, entry_counts={0,0,0}}
@@ -89,7 +89,7 @@ local function get_state(player_name)
 end
 
 local function save_state(player_name, state)
-	modstore:set_string(player_name .. "_state", minetest.serialize(state))
+	modstore:set_string(player_name .. "_state", core.serialize(state))
 end
 
 local function save_entry(player_name, category_index, entry_index, entry_text, topic_text)
@@ -211,14 +211,14 @@ local function write_cgpsmap(player_name)
 	local entry_selected = state.entry_selected[category]
 	local content = modstore:get_string(player_name .. "_category_" .. category .. "_entry_" .. entry_selected .. "_content")
 	local pos_string = modstore:get_string(player_name .. "_category_" .. category .. "_entry_" .. entry_selected .. "_topic")
-	local meta = minetest.string_to_pos(pos_string)
+	local meta = core.string_to_pos(pos_string)
 	if not meta then
 		return
 	end
 	meta.bkmrkname = content
 	local new_map = ItemStack("compassgps:cgpsmap_marked")
 	-- TODO: set_metadata is a deprecated function, but it is necessary because that's what cgpsmap uses.
-	new_map:set_metadata(minetest.serialize(meta))
+	new_map:set_metadata(core.serialize(meta))
 	return new_map
 end
 
@@ -231,7 +231,7 @@ local function write_ccompass(player_name, old_compass)
 	local entry_selected = state.entry_selected[category]
 
 	local topic = modstore:get_string(player_name .. "_category_" .. category .. "_entry_" .. entry_selected .. "_topic")
-	local pos = minetest.string_to_pos(topic)
+	local pos = core.string_to_pos(topic)
 	if not pos then
 		return
 	end
@@ -305,12 +305,12 @@ end
 
 local function read_cgpsmap(itemstack, player_name)
 	-- TODO: get_metadata is a deprecated function, but it is necessary because that's what cgpsmap uses.
-	local meta = minetest.deserialize(itemstack:get_metadata())
+	local meta = core.deserialize(itemstack:get_metadata())
 	if not (meta and meta.x and meta.y and meta.z) then
 		return
 	end
 	local content = meta.bkmrkname or ""
-	local topic = minetest.pos_to_string(meta)
+	local topic = core.pos_to_string(meta)
 	local state = get_state(player_name)
 	local entry_index = state.entry_counts[LOCATION_CATEGORY] + 1
 	state.entry_counts[LOCATION_CATEGORY] = entry_index
@@ -343,7 +343,7 @@ local function ccompass_permitted_target(itemstack)
 		return false
 	end
 	local meta = itemstack:get_meta()
-	local has_pos = minetest.string_to_pos(meta:get_string("target_pos"))
+	local has_pos = core.string_to_pos(meta:get_string("target_pos"))
 	if has_pos and not ccompass_recalibration_allowed then
 		return false
 	end
@@ -354,7 +354,7 @@ local function ccompass_permitted_source(itemstack)
 		return false
 	end
 	local meta = itemstack:get_meta()
-	local has_pos = minetest.string_to_pos(meta:get_string("target_pos"))
+	local has_pos = core.string_to_pos(meta:get_string("target_pos"))
 	if not has_pos then
 		return false
 	end
@@ -404,7 +404,7 @@ local function ensure_detached_inventory(player_name)
 	if item_invs[player_name] or not(default_modpath or mcl_books_modpath or ccompass_modpath or compassgps_modpath) then
 		return
 	end
-	local inv = minetest.create_detached_inventory("personal_log_"..player_name, detached_callbacks)
+	local inv = core.create_detached_inventory("personal_log_"..player_name, detached_callbacks)
 	inv:set_size("export_item", 1)
 	inv:set_size("import_item", 1)
 	item_invs[player_name] = true
@@ -419,8 +419,8 @@ end
 local function return_all_items(player)
 	local player_name = player:get_player_name()
 	if item_invs[player_name] then
-		local player_inv = minetest.get_inventory({type="player", name=player_name})
-		local detached_inv = minetest.get_inventory({type="detached", name="personal_log_"..player_name})
+		local player_inv = core.get_inventory({type="player", name=player_name})
+		local detached_inv = core.get_inventory({type="detached", name="personal_log_"..player_name})
 		try_return(detached_inv, player_inv, "export_item")
 		try_return(detached_inv, player_inv, "import_item")
 	end
@@ -527,17 +527,17 @@ local function make_personal_log_formspec(player)
 
 	formspec[#formspec+1] = "tablecolumns[text;text]table[0.5,1.0;9,4.75;log_table;"
 	for i, entry in ipairs(entries) do
-		formspec[#formspec+1] = minetest.formspec_escape(truncate_string(topics[i], 30)) .. ","
-		formspec[#formspec+1] = minetest.formspec_escape(truncate_string(first_line(entry), 30))
+		formspec[#formspec+1] = core.formspec_escape(truncate_string(topics[i], 30)) .. ","
+		formspec[#formspec+1] = core.formspec_escape(truncate_string(first_line(entry), 30))
 		formspec[#formspec+1] = ","
 	end
 	formspec[#formspec] = ";"..entry_selected.."]" -- don't use +1, this overwrites the last ","
 
 	if category_index == GENERAL_CATEGORY then
-		formspec[#formspec+1] = "textarea[0.5,6.0;9,0.5;topic_data;;" .. minetest.formspec_escape(topic) .. "]"
-		formspec[#formspec+1] = "textarea[0.5,6.5;9,1.75;entry_data;;".. minetest.formspec_escape(entry) .."]"
+		formspec[#formspec+1] = "textarea[0.5,6.0;9,0.5;topic_data;;" .. core.formspec_escape(topic) .. "]"
+		formspec[#formspec+1] = "textarea[0.5,6.5;9,1.75;entry_data;;".. core.formspec_escape(entry) .."]"
 	else
-		formspec[#formspec+1] = "textarea[0.5,6.0;9,2.25;entry_data;;".. minetest.formspec_escape(entry) .."]"
+		formspec[#formspec+1] = "textarea[0.5,6.0;9,2.25;entry_data;;".. core.formspec_escape(entry) .."]"
 	end
 
 	formspec[#formspec+1] = "container[0.5,8.5]"
@@ -563,13 +563,13 @@ end
 -------------------------------------------
 -- Input handlers
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
 	if formname ~= "personal_log:item" then
 		return
 	end
 	if fields.back then
 		return_all_items(player)
-		minetest.show_formspec(player:get_player_name(),"personal_log:root", make_personal_log_formspec(player))
+		core.show_formspec(player:get_player_name(),"personal_log:root", make_personal_log_formspec(player))
 		return
 	end
 	if fields.quit then
@@ -586,7 +586,7 @@ local function on_player_receive_fields(player, fields, update_callback)
 	local valid_entry_selected = entry_selected > 0 and entry_selected <= state.entry_counts[category]
 
 	if fields.log_table then
-		local table_event = minetest.explode_table_event(fields.log_table)
+		local table_event = core.explode_table_event(fields.log_table)
 		if table_event.type == "CHG" then
 			state.entry_selected[category] = table_event.row
 			save_state(player_name, state)
@@ -618,7 +618,7 @@ local function on_player_receive_fields(player, fields, update_callback)
 		state.entry_selected[category] = entry_index
 		if category == LOCATION_CATEGORY then
 			local pos = vector.round(player:get_pos())
-			save_entry(player_name, category, entry_index, content, minetest.pos_to_string(pos))
+			save_entry(player_name, category, entry_index, content, core.pos_to_string(pos))
 		elseif category == EVENT_CATEGORY then
 			local current_date = os.date("%Y-%m-%d")
 			save_entry(player_name, category, entry_index, content, current_date)
@@ -651,7 +651,7 @@ local function on_player_receive_fields(player, fields, update_callback)
 		and valid_entry_selected
 		and (can_teleport(player)) then
 		local pos_string = modstore:get_string(player_name .. "_category_" .. category .. "_entry_" .. entry_selected .. "_topic")
-		local pos = minetest.string_to_pos(pos_string)
+		local pos = core.string_to_pos(pos_string)
 		if pos then
 			player:set_pos(pos)
 		end
@@ -665,13 +665,13 @@ local function on_player_receive_fields(player, fields, update_callback)
 				local content = modstore:get_string(player_name .. "_category_" .. category .. "_entry_" .. entry_selected .. "_content")
 				topic = S("@1: @2", topic, truncate_string(first_line(content), short_title_size))
 			end
-			minetest.show_formspec(player_name, "personal_log:item",
+			core.show_formspec(player_name, "personal_log:item",
 				item_formspec(player_name, category, "export_item", topic))
 		end
 		return
 	end
 	if fields.copy_from then
-		minetest.show_formspec(player_name, "personal_log:item",
+		core.show_formspec(player_name, "personal_log:item",
 			item_formspec(player_name, category, "import_item"))
 		return
 	end
@@ -693,19 +693,19 @@ local function on_player_receive_fields(player, fields, update_callback)
 	end
 end
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
 	if formname ~= "personal_log:root" then
 		return
 	end
 	on_player_receive_fields(player, fields, function(player)
-		minetest.show_formspec(player:get_player_name(), "personal_log:root", make_personal_log_formspec(player))
+		core.show_formspec(player:get_player_name(), "personal_log:root", make_personal_log_formspec(player))
 	end)
 end)
 
 -------------------------------------------------------------------------------------------------------
 -- Inventory interface
 
-if minetest.settings:get_bool("personal_log_inventory_button", true) then
+if core.settings:get_bool("personal_log_inventory_button", true) then
 
 -- Unified Inventory
 if unified_inventory_modpath then
@@ -715,7 +715,7 @@ if unified_inventory_modpath then
 		tooltip = S("Your personal log for keeping track of what happens where"),
 		action = function(player)
 			local name = player:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
 		end,
 	})
 end
@@ -728,7 +728,7 @@ if sfinv_buttons_modpath then
 		title = S("Log"),
 		action = function(player)
 			local name = player:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
 		end,
 	})
 elseif sfinv_modpath then
@@ -736,13 +736,13 @@ elseif sfinv_modpath then
 		title = S("Log"),
 		get = function(_, player, context)
 			local name = player:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
 			return sfinv.make_formspec(player, context, "button[2.5,3;3,1;open_personal_log;"..S("Open personal log").."]", false)
 		end,
 		on_player_receive_fields = function(_, player, _, fields)
 			local name = player:get_player_name()
 			if fields.open_personal_log then
-				minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
+				core.show_formspec(name,"personal_log:root", make_personal_log_formspec(player))
 				return true
 			end
 		end
@@ -753,7 +753,7 @@ end
 
 -----------------------------------------------------------------------------------------------------
 -- Craftable item
-local craftable_setting = minetest.settings:get_bool("personal_log_craftable_item", false)
+local craftable_setting = core.settings:get_bool("personal_log_craftable_item", false)
 
 if craftable_setting or not (unified_inventory_modpath or sfinv_modpath or sfinv_buttons_modpath) then
 
@@ -766,7 +766,7 @@ if craftable_setting or not (unified_inventory_modpath or sfinv_modpath or sfinv
 	if mcl_formspec_modpath then
 		attributes.on_secondary_use = function(itemstack, user, pointed_thing)
 			local name = user:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
 		end
 		attributes.on_place = function(itemstack, user, pointed_thing)
 			if not user:get_player_control().sneak then
@@ -776,18 +776,18 @@ if craftable_setting or not (unified_inventory_modpath or sfinv_modpath or sfinv
 				end
 			end
 			local name = user:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
 		end
 	else
 		attributes.on_use = function(itemstack, user, pointed_thing)
 			local name = user:get_player_name()
-			minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
+			core.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
 		end
 	end
 
-	minetest.register_craftitem("personal_log:book", attributes)
+	core.register_craftitem("personal_log:book", attributes)
 
-	minetest.register_craft({
+	core.register_craft({
 		output = "personal_log:book",
 		type = "shapeless",
 		recipe = {book_unwritten, book_unwritten}
@@ -798,15 +798,15 @@ end
 --------------------------------------------------------------------------------------------------------
 -- Chat command
 
-local chat_command = minetest.settings:get_bool("personal_log_chat_command", false)
-local chat_command_priv = minetest.settings:get_bool("personal_log_chat_command_privilege", false)
-	or minetest.settings:get_bool("personal_log_chat_command_priviledge", false) -- backwards compat
+local chat_command = core.settings:get_bool("personal_log_chat_command", false)
+local chat_command_priv = core.settings:get_bool("personal_log_chat_command_privilege", false)
+	or core.settings:get_bool("personal_log_chat_command_priviledge", false) -- backwards compat
 
 if chat_command then
 
 local privs = nil
 if chat_command_priv then
-	minetest.register_privilege("personal_log", {
+	core.register_privilege("personal_log", {
         description =S("Allows the player to access a personal log via chat command"),
         give_to_singleplayer = false,
         give_to_admin = true,
@@ -814,12 +814,12 @@ if chat_command_priv then
 	privs = {personal_log=true}
 end
 
-minetest.register_chatcommand("log", {
+core.register_chatcommand("log", {
     description = S("Open your personal log"),
 	privs = privs,
     func = function(name, param)
-		local user = minetest.get_player_by_name(name)
-		minetest.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
+		local user = core.get_player_by_name(name)
+		core.show_formspec(name,"personal_log:root", make_personal_log_formspec(user))
 	end,
 })
 
@@ -839,10 +839,10 @@ end
 
 personal_log.add_location_entry = function(player_name, content, pos)
 	if pos == nil then
-		local player = minetest.get_player_by_name(player_name)
+		local player = core.get_player_by_name(player_name)
 		pos = player:get_pos()
 	end
-	add_entry_for_player(player_name, LOCATION_CATEGORY, content, minetest.pos_to_string(pos))
+	add_entry_for_player(player_name, LOCATION_CATEGORY, content, core.pos_to_string(pos))
 end
 
 personal_log.add_event_entry = function(player_name, content, event_date)
